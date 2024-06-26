@@ -6,13 +6,14 @@ npm init -y
 // Встановлюємо Express
 npm install express
 
-// Добавляємо файл .gitignore
+// Добавляємо файл .gitignore з вмістом:
+node_modules/
 
 git init -b main
 git add .
-git commit -m "Innitial commit"
+git commit -m "Initial commit"
 
-
+node app.js
 
 
 
