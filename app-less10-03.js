@@ -1,3 +1,9 @@
+/** Практичне питання, що вимагає написання коду:
+ * Напишіть фрагмент коду на Express.js, який реалізує GET запит
+ * для отримання даних про конкретного користувача за його ID.
+ * Запит повинен повертати статус 200 та дані користувача у форматі
+ * JSON, якщо користувач знайдений, або статус 404 з повідомленням
+ * про помилку, якщо користувача не існує. (українською) */
 // Замість ES6 будемо використовувати CommonJS
 
 const express = require("express");
@@ -19,13 +25,11 @@ app.get("/users", (req, res) => {
 
 // Читаємо дані окремого користувача
 app.get("/users/:id", (req, res) => {
-  // res.send("A specific user");
-  console.log(`===== GET /users/:id =====`);
   const { id } = req.params;
   const user = users[id];
 
   if (!user) {
-    res.status(404).json({ error: "User not found" });
+    res.status(404).json({ error: "Користувач не знайдений" });
     return;
   }
   res.status(200).json({ user: users[id] });
