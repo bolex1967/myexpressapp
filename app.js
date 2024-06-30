@@ -21,21 +21,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Create an in-memory SQLite database
-// const db = new sqlite3.Database(":memory:");
+// Middleware для логування методу і шляху запиту
+const requestLogger = (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next(); // Передаємо контроль наступному middleware
+};
 
-// Create a database structure, використовуючи ORM Prisma
-// Initialize a table
-
-// CRUD API Endpoints
-// Create a new user
-
-// In-memory "database" for demonstration purposes («База даних» у пам’яті для демонстраційних цілей.)
-// let users = {};
+// Використання middleware у додатку
+app.use(requestLogger);
 
 // GET all users **************************************************************
 app.get("/users", async (req, res) => {
-  console.log("=== GET ===");
   try {
     const users = await prisma.user.findMany();
     res.json(users);
@@ -46,7 +42,6 @@ app.get("/users", async (req, res) => {
 
 // Get a single user by id ****************************************************
 app.get("/users/:id", async (req, res) => {
-  console.log(`=== GET (by id) ===`);
   const { id } = req.params;
   try {
     const user = await prisma.user.findUnique({
@@ -64,7 +59,6 @@ app.get("/users/:id", async (req, res) => {
 
 // POST request for creating a new user ***************************************
 app.post("/users", async (req, res) => {
-  console.log("=== POST ===");
   // Сервер очікує отримання id, name, email, які дивимося в тілі запиту req.body
   const { name, email } = req.body;
 
@@ -80,7 +74,6 @@ app.post("/users", async (req, res) => {
 
 // Update a user's information ************************************************
 app.put("/users/:id", async (req, res) => {
-  console.log("PUT");
   const { id } = req.params;
   const { name, email } = req.body;
   console.log(req.body);
@@ -99,8 +92,7 @@ app.put("/users/:id", async (req, res) => {
 
 // Delete a user **************************************************************
 app.delete("/users/:id", async (req, res) => {
-  console.log(`=== DELETE ===`);
-  console.log(req.body.name, req.body.email);
+  console.log(`Delete: ${req.body.name}, ${req.body.email}`);
   const { id } = req.params;
 
   try {
