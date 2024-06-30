@@ -12,6 +12,15 @@ const port = 3000;
 // Used Middleware to parse JSON bodies
 app.use(express.json());
 
+// A middleware that runs for every request
+// Напишемо функцію, яка буде спрацьовувати при кожному запиті.
+app.use((req, res, next) => {
+  console.log("This is middleware");
+  // console.log(req);
+  console.log(req.url, req.method);
+  next();
+});
+
 // Create an in-memory SQLite database
 // const db = new sqlite3.Database(":memory:");
 
