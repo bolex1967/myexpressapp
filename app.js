@@ -4,6 +4,7 @@
 const express = require("express");
 // const sqlite3 = require("sqlite3");
 const { PrismaClient } = require("@prisma/client");
+const Joi = require("joi");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -29,6 +30,12 @@ const requestLogger = (req, res, next) => {
 
 // Використання middleware у додатку
 app.use(requestLogger);
+
+// Використовуємо метод Joi.object() для створення схеми для даних, які нам потрібно перевіряти.
+const userSchema = Joi.object({
+  name: Joi.string().min(3).max(30).required(),
+  email: Joi.string().email().required(),
+});
 
 // GET all users **************************************************************
 app.get("/users", async (req, res) => {
@@ -59,8 +66,21 @@ app.get("/users/:id", async (req, res) => {
 
 // POST request for creating a new user ***************************************
 app.post("/users", async (req, res) => {
+  // Get the request body
+  const userData = req.body;
+  // Validate the request body using the user schema
+  // Destructuring value, error
+  const { value, error } = userSchema.validate(userData);
+  // Check if there is a validation error
+  if (error) {
+    // Return a 400 status code and the error message
+    return res.status(400).json(`Error: ${error.message}`);
+  }
+  // If there is no error, proceed with the rest of the logic
+  const { name, email } = value;
+
+  // For example, create a new user in the database and return
   // Сервер очікує отримання id, name, email, які дивимося в тілі запиту req.body
-  const { name, email } = req.body;
 
   try {
     const user = await prisma.user.create({
