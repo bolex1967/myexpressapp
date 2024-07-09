@@ -16,9 +16,9 @@ app.use(express.json());
 // A middleware that runs for every request
 // Напишемо функцію, яка буде спрацьовувати при кожному запиті.
 app.use((req, res, next) => {
-  console.log("This is middleware");
+  // console.log("This is middleware");
   // console.log(req);
-  console.log(req.url, req.method);
+  console.log(`Method: ${req.method}, Path: ${req.url}`);
   next();
 });
 
@@ -39,9 +39,19 @@ const userSchema = Joi.object({
 
 // GET all users **************************************************************
 app.get("/users", async (req, res) => {
+  console.log(req.query);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 3;
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  // Assuming 'resources' is our dataset
+
   try {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    const users = await prisma.user.findMany(); // All users
+    const usersSlice = users.slice(startIndex, endIndex);
+    res.json(usersSlice);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -67,6 +77,7 @@ app.get("/users/:id", async (req, res) => {
 // POST request for creating a new user ***************************************
 app.post("/users", async (req, res) => {
   // Get the request body
+  // Сервер очікує отримання id, name, email, які дивимося в тілі запиту req.body
   const userData = req.body;
   // Validate the request body using the user schema
   // Destructuring value, error
@@ -79,8 +90,7 @@ app.post("/users", async (req, res) => {
   // If there is no error, proceed with the rest of the logic
   const { name, email } = value;
 
-  // For example, create a new user in the database and return
-  // Сервер очікує отримання id, name, email, які дивимося в тілі запиту req.body
+  // Create a new user in the database and return
 
   try {
     const user = await prisma.user.create({
