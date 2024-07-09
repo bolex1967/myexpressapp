@@ -138,6 +138,25 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
+// GET books with pagination **************************************************
+app.get("/api/books", async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  try {
+    const books = await prisma.user.findMany(); // All books
+    const result = books.slice(startIndex, endIndex);
+    res.json(result);
+    console.log(`Page: ${page}, Limit: ${limit}`);
+    console.log(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Listening port *************************************************************
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
