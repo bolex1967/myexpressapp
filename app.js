@@ -157,7 +157,11 @@ app.get("/api/books", async (req, res) => {
   }
 });
 
-// Listening port *************************************************************
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
+if (require.main === module) {
+  // Listening port *************************************************************
+  app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`);
+  });
+}
+
+module.exports = app;
