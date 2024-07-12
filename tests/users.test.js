@@ -54,7 +54,7 @@ describe("GET /users", () => {
 
   // Перевіримо, що наш додаток не падає, при введенні некоректних даних
   test("Should handle invalid page and limit parameters", async () => {
-    const response = await request(app).get("/users?page=-1&limit=abc");
+    const response = await request(app).get("/users?page=-5&limit=abc");
     expect(response.statusCode).toBe(200);
     expect(response.body).toBeInstanceOf(Array);
   });
