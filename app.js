@@ -41,6 +41,10 @@ app.get("/health", (rec, res) => {
   res.status(200).send("Ok!");
 });
 
+app.get("/status", (rec, res) => {
+  res.status(200).send("Сервер працює!");
+});
+
 // GET all users **************************************************************
 app.get("/users", async (req, res) => {
   console.log(req.query);
