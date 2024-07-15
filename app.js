@@ -37,6 +37,10 @@ const userSchema = Joi.object({
   email: Joi.string().email().required(),
 });
 
+app.get("/health", (rec, res) => {
+  res.status(200).send("Ok!");
+});
+
 // GET all users **************************************************************
 app.get("/users", async (req, res) => {
   console.log(req.query);
