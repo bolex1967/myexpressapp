@@ -5,6 +5,7 @@ const express = require("express");
 // const sqlite3 = require("sqlite3");
 const { PrismaClient } = require("@prisma/client");
 const Joi = require("joi");
+const bcrypt = require("bcrypt");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -82,6 +83,7 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
+/* 
 // POST request for creating a new user ***************************************
 app.post("/users", async (req, res) => {
   // Get the request body
@@ -109,6 +111,7 @@ app.post("/users", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+*/
 
 // Update a user's information ************************************************
 app.put("/users/:id", async (req, res) => {
@@ -162,6 +165,30 @@ app.get("/api/books", async (req, res) => {
     console.log(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Маршрут для реєстрації користувачів
+app.post("/register", async (req, res) => {
+  const { name, password, email } = req.body;
+  try {
+    // створимо 'сіль', щоб наші хеші були різні (нестандартні),
+    // використовуючи bcrypt
+    const salt = await bcrypt.genSalt(10);
+    // Робимо захешований пароль
+    const hashedPassword = await bcrypt.hash(password, salt);
+    // і зберігаємо цього користувача в нашій базі даних
+    const user = await prisma.user.create({
+      data: {
+        name,
+        hashedPassword,
+        email,
+      },
+    });
+    res.status(200).send("User was created");
+  } catch (err) {
+    res.status(500).send("Error while creating a user");
+    // console.log(err);
   }
 });
 
