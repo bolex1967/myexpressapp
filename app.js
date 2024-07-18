@@ -192,24 +192,79 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Обробка POST-запиту на маршрут "/login"
 app.post("/login", async (req, res) => {
+  // Витягування email та password з тіла запиту
   const { email, password } = req.body;
   try {
+    // Пошук користувача в базі даних за email
     const user = await prisma.user.findUnique({
       where: { email: email },
     });
+    // Якщо користувач не знайдений, повертаємо статус 401 (Unauthorized) і повідомлення
     if (!user) {
       return res.status(401).send("No user found");
     }
+    // Перевірка пароля за допомогою bcrypt
     const isValid = await bcrypt.compare(password, user.hashedPassword);
+    // Якщо пароль не валідний, повертаємо статус 401 (Unauthorized) і повідомлення
     if (!isValid) {
       return res.status(401).send("Invalid password");
     }
-
+    // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
     res.status(200).send("Login successful");
   } catch (err) {
+    // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
+    // Логування помилки в консолі для відлагодження
     // console.log(err);
+  }
+});
+
+// Lesson 11-02. Task
+/** Напишіть функцію на JavaScript для Express.js маршруту `/change-password`,
+ * яка дозволить користувачам змінювати свій пароль.
+ * Функція повинна приймати старий пароль, перевіряти його,
+ * і якщо він вірний, оновлювати пароль на новий,
+ * використовуючи хешування bcrypt.
+ * У відповідь на запит поверніть повідомлення про успішну зміну паролю
+ * або про помилку, якщо старий пароль не відповідає збереженому хешу. */
+// Обробка POST-запиту на маршрут "/change-password"
+app.post("/change-password", async (req, res) => {
+  // Витягування email, старого пароля і нового пароля з тіла запиту
+
+  console.log("/change-password - req.body", req.body);
+
+  const { email, oldPassword, newPassword } = req.body;
+  try {
+    // Пошук користувача в базі даних за email
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+    // Якщо користувач не знайдений, повертаємо статус 401 (Unauthorized) і повідомлення
+    if (!user) {
+      return res.status(401).send("No user found");
+    }
+    // Перевірка старого пароля за допомогою bcrypt
+    const isValid = await bcrypt.compare(oldPassword, user.hashedPassword);
+    // Якщо старий пароль не валідний, повертаємо статус 401 (Unauthorized) і повідомлення
+    if (!isValid) {
+      return res.status(401).send("Old password is incorrect");
+    }
+    // Хешування нового пароля за допомогою bcrypt
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    // Оновлення пароля користувача в базі даних
+    await prisma.user.update({
+      where: { email: email },
+      data: { hashedPassword: hashedNewPassword },
+    });
+    // Якщо зміна пароля успішна, повертаємо статус 200 (OK) і повідомлення
+    res.status(200).send("Password changed successfully");
+  } catch (err) {
+    // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
+    res.status(500).send("Password change error");
+    // Логування помилки в консолі для відлагодження
+    console.log(err);
   }
 });
 
