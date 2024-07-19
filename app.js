@@ -226,7 +226,11 @@ app.post("/login", async (req, res) => {
     req.session.username = user.name;
     req.session.userId = user.id;
     // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
-    res.status(200).send(`Login successful. Welcome, ${user.username}`);
+    res
+      .status(200)
+      .send(
+        `Login successful.\nWelcome, ${req.session.username} (ID: ${req.session.userId})`
+      );
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
