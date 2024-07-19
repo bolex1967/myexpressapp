@@ -6,6 +6,7 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
+const session = require("express-session");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -22,6 +23,15 @@ app.use((req, res, next) => {
   console.log(`Method: ${req.method}, Path: ${req.url}`);
   next();
 });
+
+// Налаштування middleware для сеансу
+app.use(
+  session({
+    secret: "your_secretkey_here", // секрет простий, але для навчання підійде
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
 // Middleware для логування методу і шляху запиту
 const requestLogger = (req, res, next) => {
@@ -50,7 +60,7 @@ app.get("/status", (rec, res) => {
 app.get("/users", async (req, res) => {
   console.log(req.query);
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 3;
+  const limit = parseInt(req.query.limit) || 10;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -211,13 +221,17 @@ app.post("/login", async (req, res) => {
     if (!isValid) {
       return res.status(401).send("Invalid password");
     }
+    // Зберігаємо дані з сесії
+    console.log("Зберігаємо дані з сесії:", user.name, user.id);
+    req.session.username = user.name;
+    req.session.userId = user.id;
     // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
     res.status(200).send("Login successful");
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
     // Логування помилки в консолі для відлагодження
-    // console.log(err);
+    console.log(err);
   }
 });
 
@@ -265,6 +279,16 @@ app.post("/change-password", async (req, res) => {
     res.status(500).send("Password change error");
     // Логування помилки в консолі для відлагодження
     console.log(err);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  console.log("req.session.username:", req.session.username);
+
+  if (req.session.username) {
+    res.send(`Hi, ${req.session.username}`);
+  } else {
+    res.send("Please log in");
   }
 });
 
