@@ -226,7 +226,7 @@ app.post("/login", async (req, res) => {
     req.session.username = user.name;
     req.session.userId = user.id;
     // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
-    res.status(200).send("Login successful");
+    res.status(200).send(`Login successful. Welcome, ${user.username}`);
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
@@ -235,8 +235,8 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Lesson 11-02. Task
-/** Напишіть функцію на JavaScript для Express.js маршруту `/change-password`,
+/** Lesson 11-02. Task
+ * Напишіть функцію на JavaScript для Express.js маршруту `/change-password`,
  * яка дозволить користувачам змінювати свій пароль.
  * Функція повинна приймати старий пароль, перевіряти його,
  * і якщо він вірний, оновлювати пароль на новий,
