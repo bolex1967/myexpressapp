@@ -16,6 +16,7 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
     "prisma": "^5.16.1",
     "sqlite3": "^5.1.7"
   },

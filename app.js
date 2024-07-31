@@ -6,7 +6,8 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
-const session = require("express-session");
+// const session = require("express-session");
+const { authenticateToken, generateToken } = require("./security");
 
 const prisma = new PrismaClient();
 const app = express();
@@ -24,14 +25,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Налаштування middleware для сеансу
+/* // Налаштування middleware для сеансу
 app.use(
   session({
     secret: "your_secretkey_here", // секрет простий, але для навчання підійде
     resave: false,
     saveUninitialized: true,
   })
-);
+); */
 
 // Middleware для логування методу і шляху запиту
 const requestLogger = (req, res, next) => {
@@ -215,22 +216,29 @@ app.post("/login", async (req, res) => {
     if (!user) {
       return res.status(401).send("No user found");
     }
+
+    console.log("User:", user);
+
     // Перевірка пароля за допомогою bcrypt
     const isValid = await bcrypt.compare(password, user.hashedPassword);
     // Якщо пароль не валідний, повертаємо статус 401 (Unauthorized) і повідомлення
     if (!isValid) {
       return res.status(401).send("Invalid password");
     }
-    // Зберігаємо дані з сесії
-    console.log("Зберігаємо дані з сесії:", user.name, user.id);
-    req.session.username = user.name;
-    req.session.userId = user.id;
+    // // Зберігаємо дані з сесії
+    // console.log("Зберігаємо дані з сесії:", user.name, user.id);
+    // req.session.username = user.name;
+    // req.session.userId = user.id;
+
+    // Замість сесій (які ми використовували раніше) генеруємо токен
+    // викликавши функцію generateToken і передавши в неї параметер user
+    token = generateToken(user);
+
     // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
-    res
-      .status(200)
-      .send(
-        `Login successful.\nWelcome, ${req.session.username} (ID: ${req.session.userId})`
-      );
+    res.status(200).send({
+      message: `Login successful. ${token}`,
+      token: token,
+    });
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
@@ -286,11 +294,10 @@ app.post("/change-password", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
-  console.log("req.session.username:", req.session.username);
-
-  if (req.session.username) {
-    res.send(`Hi, ${req.session.username}`);
+app.get("/profile", authenticateToken, async (req, res) => {
+  console.log("req.user.username:", req.user.username);
+  if (req.user) {
+    res.send(`Hi, ${req.user.username}`);
   } else {
     res.send("Please log in");
   }
