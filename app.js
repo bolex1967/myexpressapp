@@ -2,49 +2,33 @@
 // Замість ES6 будемо використовувати CommonJS
 
 const express = require("express");
-// const sqlite3 = require("sqlite3");
 const { PrismaClient } = require("@prisma/client");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
-// const session = require("express-session");
 const { authenticateToken, generateToken } = require("./security");
 
 const prisma = new PrismaClient();
 const app = express();
 const port = 3000;
 
-// Used Middleware to parse JSON bodies
-app.use(express.json());
+app.use(express.json()); // Used Middleware to parse JSON bodies
 
-// A middleware that runs for every request
-// Напишемо функцію, яка буде спрацьовувати при кожному запиті.
 app.use((req, res, next) => {
-  // console.log("This is middleware");
-  // console.log(req);
+  // A middleware that runs for every request
   console.log(`Method: ${req.method}, Path: ${req.url}`);
   next();
 });
 
-/* // Налаштування middleware для сеансу
-app.use(
-  session({
-    secret: "your_secretkey_here", // секрет простий, але для навчання підійде
-    resave: false,
-    saveUninitialized: true,
-  })
-); */
-
-// Middleware для логування методу і шляху запиту
 const requestLogger = (req, res, next) => {
+  // Middleware для логування методу і шляху запиту
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next(); // Передаємо контроль наступному middleware
 };
 
-// Використання middleware у додатку
-app.use(requestLogger);
+app.use(requestLogger); // Використовуємо middleware у додатку
 
-// Використовуємо метод Joi.object() для створення схеми для даних, які нам потрібно перевіряти.
 const userSchema = Joi.object({
+  // Метод Joi.object() - створення схеми для даних, які нам потрібно перевіряти.
   name: Joi.string().min(3).max(30).required(),
   email: Joi.string().email().required(),
 });
@@ -57,8 +41,7 @@ app.get("/status", (rec, res) => {
   res.status(200).send("Сервер працює!");
 });
 
-// GET all users **************************************************************
-app.get("/users", async (req, res) => {
+app.get("/users", authenticateToken, async (req, res) => {
   console.log(req.query);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -77,8 +60,8 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Get a single user by id ****************************************************
-app.get("/users/:id", async (req, res) => {
+app.get("/users/:id", authenticateToken, async (req, res) => {
+  // Get a single user by id
   const { id } = req.params;
   try {
     const user = await prisma.user.findUnique({
@@ -124,8 +107,8 @@ app.post("/users", async (req, res) => {
 });
 */
 
-// Update a user's information ************************************************
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", authenticateToken, async (req, res) => {
+  // Update a user's information ************************************************
   const { id } = req.params;
   const { name, email } = req.body;
   console.log(req.body);
@@ -142,8 +125,7 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
-// Delete a user **************************************************************
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", authenticateToken, async (req, res) => {
   console.log(`Delete: ${req.body.name}, ${req.body.email}`);
   const { id } = req.params;
 
@@ -160,8 +142,8 @@ app.delete("/users/:id", async (req, res) => {
   }
 });
 
-// GET books with pagination **************************************************
 app.get("/api/books", async (req, res) => {
+  // GET books with pagination **************************************************
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
 
@@ -179,7 +161,6 @@ app.get("/api/books", async (req, res) => {
   }
 });
 
-// Маршрут для реєстрації користувачів
 app.post("/register", async (req, res) => {
   const { name, password, email } = req.body;
   try {
@@ -203,63 +184,60 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Обробка POST-запиту на маршрут "/login"
 app.post("/login", async (req, res) => {
+  console.log("=== /login ===");
+
   // Витягування email та password з тіла запиту
   const { email, password } = req.body;
+
   try {
     // Пошук користувача в базі даних за email
     const user = await prisma.user.findUnique({
       where: { email: email },
     });
-    // Якщо користувач не знайдений, повертаємо статус 401 (Unauthorized) і повідомлення
+
+    // Якщо користувач не знайдений - 401 (Unauthorized)
     if (!user) {
       return res.status(401).send("No user found");
     }
 
-    console.log("User:", user);
+    console.log("--- User:", user);
 
-    // Перевірка пароля за допомогою bcrypt
-    const isValid = await bcrypt.compare(password, user.hashedPassword);
-    // Якщо пароль не валідний, повертаємо статус 401 (Unauthorized) і повідомлення
+    const isValid = await bcrypt.compare(password, user.hashedPassword); // Перевірка пароля за допомогою bcrypt
+
     if (!isValid) {
       return res.status(401).send("Invalid password");
     }
-    // // Зберігаємо дані з сесії
-    // console.log("Зберігаємо дані з сесії:", user.name, user.id);
-    // req.session.username = user.name;
-    // req.session.userId = user.id;
 
-    // Замість сесій (які ми використовували раніше) генеруємо токен
-    // викликавши функцію generateToken і передавши в неї параметер user
-    token = generateToken(user);
+    token = generateToken(user); // Генеруємо токен
 
-    // Якщо авторизація успішна, повертаємо статус 200 (OK) і повідомлення
+    // Якщо авторизація успішна, повертаємо статус 200 (OK)
     res.status(200).send({
-      message: `Login successful. ${token}`,
+      message: "Login successful",
       token: token,
     });
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Login error");
     // Логування помилки в консолі для відлагодження
-    console.log(err);
+    console.log("--- error:", err);
   }
 });
 
-/** Lesson 11-02. Task
- * Напишіть функцію на JavaScript для Express.js маршруту `/change-password`,
- * яка дозволить користувачам змінювати свій пароль.
- * Функція повинна приймати старий пароль, перевіряти його,
- * і якщо він вірний, оновлювати пароль на новий,
- * використовуючи хешування bcrypt.
- * У відповідь на запит поверніть повідомлення про успішну зміну паролю
- * або про помилку, якщо старий пароль не відповідає збереженому хешу. */
-// Обробка POST-запиту на маршрут "/change-password"
 app.post("/change-password", async (req, res) => {
+  console.log("=== /change-password ===");
+  /** Lesson 11-02. Task
+   * Напишіть функцію на JavaScript для Express.js маршруту `/change-password`,
+   * яка дозволить користувачам змінювати свій пароль.
+   * Функція повинна приймати старий пароль, перевіряти його,
+   * і якщо він вірний, оновлювати пароль на новий,
+   * використовуючи хешування bcrypt.
+   * У відповідь на запит поверніть повідомлення про успішну зміну паролю
+   * або про помилку, якщо старий пароль не відповідає збереженому хешу. */
+
   // Витягування email, старого пароля і нового пароля з тіла запиту
 
-  console.log("/change-password - req.body", req.body);
+  console.log("--- req.body", req.body);
 
   const { email, oldPassword, newPassword } = req.body;
   try {
@@ -267,28 +245,35 @@ app.post("/change-password", async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { email: email },
     });
+
     // Якщо користувач не знайдений, повертаємо статус 401 (Unauthorized) і повідомлення
     if (!user) {
       return res.status(401).send("No user found");
     }
+
     // Перевірка старого пароля за допомогою bcrypt
     const isValid = await bcrypt.compare(oldPassword, user.hashedPassword);
+
     // Якщо старий пароль не валідний, повертаємо статус 401 (Unauthorized) і повідомлення
     if (!isValid) {
       return res.status(401).send("Old password is incorrect");
     }
+
     // Хешування нового пароля за допомогою bcrypt
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
     // Оновлення пароля користувача в базі даних
     await prisma.user.update({
       where: { email: email },
       data: { hashedPassword: hashedNewPassword },
     });
+
     // Якщо зміна пароля успішна, повертаємо статус 200 (OK) і повідомлення
     res.status(200).send("Password changed successfully");
   } catch (err) {
     // У випадку помилки повертаємо статус 500 (Internal Server Error) і повідомлення про помилку
     res.status(500).send("Password change error");
+
     // Логування помилки в консолі для відлагодження
     console.log(err);
   }
